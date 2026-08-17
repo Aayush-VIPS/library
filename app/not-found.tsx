@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function NotFound(){return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",padding:24}}><div className="card section-card" style={{maxWidth:460,textAlign:"center"}}><span className="eyebrow">404</span><h2>Page not found</h2><p className="subtle">The requested dashboard page does not exist.</p><p><Link className="btn primary" href="/dashboard">Return to dashboard</Link></p></div></main>}

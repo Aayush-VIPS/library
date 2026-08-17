@@ -1,0 +1,2 @@
+"use client";
+export default function ErrorPage({reset}:{error:Error&{digest?:string};reset:()=>void}){void 0;return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",padding:24}}><div className="card section-card" style={{maxWidth:520,textAlign:"center"}}><span className="eyebrow">System error</span><h2>Something went wrong</h2><p className="subtle">The request could not be completed. No RFID data was intentionally modified by this error screen.</p><button className="btn primary" onClick={reset}>Try again</button></div></main>}

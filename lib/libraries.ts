@@ -7,7 +7,7 @@ export const LIBRARIES = [
   { id: "it", name: "IT Library" },
   { id: "business", name: "Business Library" },
   { id: "journalism", name: "Journalism Library" },
-  { id: "meditation-room", name: "Meditation Room", location: "B Block" },
+  { id: "meditation-room", name: "Meditation Room" },
 ] as const;
 
 export const DEFAULT_LIBRARY_ID = LIBRARIES[0].id;
@@ -65,7 +65,7 @@ export async function ensureDefaultLibraries() {
       await Library.create({
         libraryId: "meditation-room",
         name: "Meditation Room",
-        location: "B Block",
+        location: "",
         active: true,
       });
     }

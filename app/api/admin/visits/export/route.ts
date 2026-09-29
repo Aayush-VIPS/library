@@ -3,14 +3,15 @@ import { allowedLibraryIds, requireAdminApi } from "@/lib/auth";
 import { visitHistory } from "@/lib/services/dashboard";
 import { csvEscape } from "@/lib/csv";
 import { formatIST } from "@/lib/time";
-import { LIBRARIES, libraryName } from "@/lib/libraries";
+import { librariesList, libraryName } from "@/lib/libraries";
 
 export async function GET(req: NextRequest) {
   const admin = await requireAdminApi();
   if (!admin) return new Response("Unauthorized", { status: 401 });
   const date = req.nextUrl.searchParams.get("date") || new Date().toISOString().slice(0, 10);
   const requestedLibrary = req.nextUrl.searchParams.get("library") || "all";
-  const libraryId = LIBRARIES.some((library) => library.id === requestedLibrary) ? requestedLibrary : "all";
+  const libraries = await librariesList();
+  const libraryId = libraries.some((library) => library.id === requestedLibrary) ? requestedLibrary : "all";
   const parsedDate = new Date(`${date}T12:00:00+05:30`);
   if (Number.isNaN(parsedDate.getTime())) return new Response("Invalid date", { status: 400 });
   const visits: any[] = await visitHistory(parsedDate, "", allowedLibraryIds(admin, libraryId));

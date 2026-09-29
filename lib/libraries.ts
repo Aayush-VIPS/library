@@ -7,6 +7,7 @@ export const LIBRARIES = [
   { id: "it", name: "IT Library" },
   { id: "business", name: "Business Library" },
   { id: "journalism", name: "Journalism Library" },
+  { id: "meditation-room", name: "Meditation Room" },
 ] as const;
 
 export const DEFAULT_LIBRARY_ID = LIBRARIES[0].id;
@@ -34,19 +35,41 @@ export function normalizeLibraryId(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
 }
 
+export function libraryDisplayName(name: string, location?: string) {
+  const cleanName = name.trim();
+  if (/meditation/i.test(cleanName)) return cleanName || "Meditation Room";
+  const cleanLocation = (location || "").trim().replace(/\s+/g, " ");
+  if (!cleanLocation || !/\b(block|floor|wing|building|level)\b/i.test(cleanLocation)) return cleanName;
+  return /\blibrary\b/i.test(cleanLocation) ? cleanLocation : cleanLocation + " Library";
+}
+
 export async function ensureDefaultLibraries() {
   await connectDB();
   if (defaultsChecked) return;
   const count = await Library.estimatedDocumentCount();
-  if (count > 0) {
-    defaultsChecked = true;
-    return;
+  if (count === 0) {
+    await Library.insertMany(LIBRARIES.map((library) => ({
+      libraryId: library.id,
+      name: library.name,
+      location: "location" in library ? library.location : "",
+      active: true,
+    })), { ordered: false });
+  } else {
+    const existingMeditationRoom = await Library.findOne({
+      $or: [
+        { libraryId: "meditation-room" },
+        { name: /meditation/i },
+      ],
+    }).lean();
+    if (!existingMeditationRoom) {
+      await Library.create({
+        libraryId: "meditation-room",
+        name: "Meditation Room",
+        location: "",
+        active: true,
+      });
+    }
   }
-  await Library.insertMany(LIBRARIES.map((library) => ({
-    libraryId: library.id,
-    name: library.name,
-    active: true,
-  })), { ordered: false });
   defaultsChecked = true;
 }
 
@@ -59,10 +82,11 @@ export async function librariesList(includeInactive = false): Promise<LibraryOpt
   const rows = await Library.find(includeInactive ? {} : { active: true }).sort({ name: 1 }).lean();
   const mapped = rows.map((library: any) => ({
     id: library.libraryId,
-    name: library.name,
+    name: libraryDisplayName(library.name, library.location),
     location: library.location || "",
     active: library.active !== false,
   }));
+  for (const library of mapped) libraryNameById.set(library.id, library.name);
   cachedLibraries = { includeInactive, rows: mapped, expiresAt: now + 30_000 };
   return mapped;
 }

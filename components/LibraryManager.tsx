@@ -2,7 +2,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type LibraryRow = { id:string; libraryId:string; name:string; location:string; active:boolean };
+type LibraryRow = { id:string; libraryId:string; name:string; displayName?:string; location:string; active:boolean };
 
 export function LibraryManager({ libraries }: { libraries: LibraryRow[] }) {
   const router = useRouter();
@@ -36,7 +36,7 @@ export function LibraryManager({ libraries }: { libraries: LibraryRow[] }) {
 
   return <>
     <div className="toolbar"><div className="toolbar-title"><b>{libraries.length} libraries</b><span>Branches available for reader assignment and RBAC scopes</span></div><div className="toolbar-actions"><button className="btn primary" onClick={openNew}>Add library</button></div></div>
-    <div className="table-scroll"><table><thead><tr><th>Library</th><th>ID</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead><tbody>{libraries.length?libraries.map((library)=><tr key={library.id}><td><b>{library.name}</b></td><td>{library.libraryId}</td><td>{library.location||"—"}</td><td><span className={`badge ${library.active?"green":"gray"}`}>{library.active?"ACTIVE":"DISABLED"}</span></td><td><div className="toolbar-actions"><button className="btn" onClick={()=>openEdit(library)}>Edit</button><button className={`btn ${library.active?"danger":""}`} disabled={busy} onClick={()=>toggle(library)}>{library.active?"Disable":"Enable"}</button></div></td></tr>):<tr><td colSpan={5} className="empty">No libraries configured.</td></tr>}</tbody></table></div>
+    <div className="table-scroll"><table><thead><tr><th>Library</th><th>ID</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead><tbody>{libraries.length?libraries.map((library)=><tr key={library.id}><td><b>{library.displayName||library.name}</b></td><td>{library.libraryId}</td><td>{library.location||"—"}</td><td><span className={`badge ${library.active?"green":"gray"}`}>{library.active?"ACTIVE":"DISABLED"}</span></td><td><div className="toolbar-actions"><button className="btn" onClick={()=>openEdit(library)}>Edit</button><button className={`btn ${library.active?"danger":""}`} disabled={busy} onClick={()=>toggle(library)}>{library.active?"Disable":"Enable"}</button></div></td></tr>):<tr><td colSpan={5} className="empty">No libraries configured.</td></tr>}</tbody></table></div>
     {modal&&<div className="modal-backdrop" role="dialog" aria-modal="true"><form className="modal" onSubmit={save}><h3>{editing?"Edit library":"Add library"}</h3><p>Library ID is used in device assignments and access scopes. It is generated from the name unless specified.</p><div className="form-grid">{!editing&&<div className="field"><label>Library ID</label><input className="input" name="libraryId" placeholder="central-library"/></div>}<div className="field"><label>Name</label><input className="input" name="name" required defaultValue={editing?.name||""}/></div><div className="field full"><label>Location</label><input className="input" name="location" defaultValue={editing?.location||""}/></div></div>{message&&<p className="error" style={{marginTop:10}}>{message}</p>}<div className="modal-actions"><button type="button" className="btn" onClick={()=>setModal(false)}>Cancel</button><button className="btn primary" disabled={busy}>{busy?"Saving...":"Save library"}</button></div></form></div>}
   </>;
 }

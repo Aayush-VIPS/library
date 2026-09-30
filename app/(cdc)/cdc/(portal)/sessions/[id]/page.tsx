@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connectDB } from "@/lib/db";
-import { CDCSession, CDCAttendance, CDCStudent } from "@/lib/models";
+import { CDCSession, CDCAttendance, CDCStudent, Device } from "@/lib/models";
 import { cdcProgramLabel } from "@/lib/cdc";
 import { formatDateIST, formatIST } from "@/lib/time";
 import { CDCAttendanceScanner } from "@/components/CDCAttendanceScanner";
@@ -27,7 +27,7 @@ export default async function CDCSessionPage({ params }: { params: Promise<{ id:
       <div className="card metric-card"><span className="metric-label">Present</span><strong className="metric-value green">{attendance.length}</strong><span className="metric-foot">Unique students marked</span></div>
       <div className="card metric-card"><span className="metric-label">Eligible roster</span><strong className="metric-value">{eligibleCount}</strong><span className="metric-foot">{session.eligibleProgramCodes?.length ? session.eligibleProgramCodes.map(cdcProgramLabel).join(", ") : "All CDC programmes"}</span></div>
       <div className="card metric-card"><span className="metric-label">Attendance rate</span><strong className="metric-value blue">{percent}%</strong><span className="metric-foot">Present / eligible</span></div>
-      <div className="card metric-card"><span className="metric-label">RFID readers</span><strong className="metric-value" style={{fontSize:22}}>{session.scannerActive ? "ACTIVE" : "OFF"}</strong><span className="metric-foot">{session.scannerActive ? "Readers are bound to this session" : session.status === "OPEN" ? "Activate when ready to scan" : "Attendance locked"}</span></div>
+      <div className="card metric-card"><span className="metric-label">RFID readers</span><strong className="metric-value" style={{fontSize:22}}>{session.scannerActive ? `${onlineReaders} ONLINE` : "OFF"}</strong><span className="metric-foot">{session.scannerActive ? "Online readers are bound to this session" : session.status === "OPEN" ? "Activate when ready to scan" : "Attendance locked"}</span></div>
     </section>
 
     <section className="card section-card" style={{marginTop:15}}><CDCAttendanceScanner sessionId={id} status={session.status} scannerActive={Boolean(session.scannerActive)} /></section>

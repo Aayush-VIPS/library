@@ -6,6 +6,7 @@ const links = [
   ["/cdc", "Overview"],
   ["/cdc/students", "Students"],
   ["/cdc/sessions", "Placement Sessions"],
+  ["/cdc/readers", "RFID Readers"],
 ] as const;
 
 export function CDCSidebar() {

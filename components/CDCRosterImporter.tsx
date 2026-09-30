@@ -33,7 +33,7 @@ export function CDCRosterImporter() {
       if (file) importCsv(file);
       e.currentTarget.value = "";
     }} />
-    <button className="btn primary" disabled={busy} onClick={() => fileRef.current?.click()}>{busy ? "Importing…" : "Import CDC roster"}</button>
+    <button type="button" className="btn primary" disabled={busy} onClick={() => fileRef.current?.click()}>{busy ? "Importing…" : "Import CDC roster"}</button>
     {message && <span className={message.startsWith("Roster import complete") ? "success" : "error"}>{message}</span>}
   </div>;
 }

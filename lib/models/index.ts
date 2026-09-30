@@ -6,3 +6,7 @@ export { ScanEvent } from "./ScanEvent";
 export { LibraryVisit } from "./LibraryVisit";
 export { LoginThrottle } from "./LoginThrottle";
 export { Library } from "./Library";
+
+export { CDCStudent } from "./CDCStudent";
+export { CDCSession } from "./CDCSession";
+export { CDCAttendance } from "./CDCAttendance";

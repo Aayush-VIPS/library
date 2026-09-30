@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 type ScanResult = { name: string; enrollmentNumber: string; program: string; method: "SCAN" | "MANUAL" };
 
-export function CDCAttendanceScanner({ sessionId, status }: { sessionId: string; status: "OPEN" | "CLOSED" }) {
+export function CDCAttendanceScanner({ sessionId, status, scannerActive }: { sessionId: string; status: "OPEN" | "CLOSED"; scannerActive: boolean }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -52,6 +52,31 @@ export function CDCAttendanceScanner({ sessionId, status }: { sessionId: string;
     }
   }
 
+  async function setScannerActive(next: boolean) {
+    setBusy(true);
+    setMessage("");
+    setResult(null);
+    try {
+      const res = await fetch(`/api/cdc/sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ scannerActive: next }),
+      });
+      const body = await res.json().catch(() => ({ message: "Could not update RFID reader session." }));
+      if (!res.ok) {
+        setMessage(body.message || "Could not update RFID reader session.");
+        return;
+      }
+      setMessage(next ? "This session is now active on CDC RFID readers." : "CDC RFID readers have been detached from this session.");
+      router.refresh();
+    } catch {
+      setMessage("Network error. RFID reader session was not changed.");
+    } finally {
+      setBusy(false);
+      restoreFocus();
+    }
+  }
+
   async function changeStatus(next: "OPEN" | "CLOSED") {
     setBusy(true);
     setMessage("");
@@ -79,7 +104,10 @@ export function CDCAttendanceScanner({ sessionId, status }: { sessionId: string;
   return <div className="cdc-scan-panel">
     <div className="cdc-scan-head">
       <div><span className="eyebrow">Attendance capture</span><h3>{status === "OPEN" ? "Scan card or enter enrollment" : "Session is closed"}</h3><p>Card ID scans are recorded as SCAN. Enrollment-number entries are recorded as MANUAL. Duplicate attendance is blocked.</p></div>
-      <button className={`btn ${status === "OPEN" ? "danger" : "green"}`} disabled={busy} onClick={() => changeStatus(status === "OPEN" ? "CLOSED" : "OPEN")}>{status === "OPEN" ? "Close attendance" : "Reopen attendance"}</button>
+      <div className="toolbar-actions">
+        {status === "OPEN" && <button type="button" className={`btn ${scannerActive ? "green" : ""}`} disabled={busy} onClick={() => setScannerActive(!scannerActive)}>{scannerActive ? "RFID readers active" : "Activate RFID readers"}</button>}
+        <button type="button" className={`btn ${status === "OPEN" ? "danger" : "green"}`} disabled={busy} onClick={() => changeStatus(status === "OPEN" ? "CLOSED" : "OPEN")}>{status === "OPEN" ? "Close attendance" : "Reopen attendance"}</button>
+      </div>
     </div>
     <form className="cdc-scan-form" onSubmit={submit}>
       <input ref={inputRef} className="input cdc-scan-input" inputMode="numeric" autoComplete="off" disabled={status !== "OPEN" || busy} value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder="Scan Card ID or type enrollment number" />

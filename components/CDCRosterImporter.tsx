@@ -11,20 +11,37 @@ export function CDCRosterImporter() {
   async function importCsv(file: File) {
     setBusy(true);
     setMessage("");
-    const text = await file.text();
-    const res = await fetch("/api/cdc/students/import", {
-      method: "POST",
-      headers: { "content-type": "text/csv" },
-      body: text,
-    });
-    const body = await res.json().catch(() => ({ message: "Import failed." }));
-    setBusy(false);
-    if (!res.ok) {
-      setMessage(`${body.message || "Import failed."}${body.errors?.length ? ` ${body.errors.slice(0, 3).join(" ")}` : ""}`);
-      return;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60_000);
+
+    try {
+      const text = await file.text();
+      const res = await fetch("/api/cdc/students/import", {
+        method: "POST",
+        headers: { "content-type": "text/csv" },
+        body: text,
+        signal: controller.signal,
+      });
+      const body = await res.json().catch(() => ({ message: "Import failed." }));
+
+      if (!res.ok) {
+        setMessage(`${body.message || "Import failed."}${body.errors?.length ? ` ${body.errors.slice(0, 3).join(" ")}` : ""}`);
+        return;
+      }
+
+      setMessage(`Roster import complete: ${body.imported} records processed.`);
+      router.refresh();
+    } catch (error: any) {
+      setMessage(
+        error?.name === "AbortError"
+          ? "Import timed out after 60 seconds. No retry was started automatically."
+          : "Network error while importing the CDC roster.",
+      );
+    } finally {
+      clearTimeout(timeout);
+      setBusy(false);
     }
-    setMessage(`Roster import complete: ${body.imported} records processed.`);
-    router.refresh();
   }
 
   return <div className="toolbar-actions">

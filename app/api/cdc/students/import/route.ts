@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
     const department = idx.department == null ? "" : String(row[idx.department] || "").trim();
     const sourceProgram = idx.program == null ? "" : String(row[idx.program] || "").trim();
     const item = { row: index + 2, decoded, cardId, name, department, sourceProgram };
+
     if (!decoded || !name || !/^\d{1,20}$/.test(cardId)) errors.push(`Row ${item.row}: invalid enrollment, name or Card ID.`);
     if (decoded && decoded.instituteCode !== "177") errors.push(`Row ${item.row}: institute code ${decoded.instituteCode} is not VIPS 177.`);
     if (decoded && !CDC_PROGRAM_CODES.has(decoded.programCode)) errors.push(`Row ${item.row}: programme code ${decoded.programCode} is not in the approved CDC B.Tech list.`);
@@ -42,18 +43,44 @@ export async function POST(req: NextRequest) {
     return item;
   });
 
-  if (errors.length) return Response.json({ success: false, message: "CDC roster validation failed.", errors: errors.slice(0, 50) }, { status: 400 });
+  if (errors.length) {
+    return Response.json(
+      { success: false, message: "CDC roster validation failed.", errors: errors.slice(0, 50) },
+      { status: 400 },
+    );
+  }
 
   await connectDB();
-  let imported = 0;
-  const session = await mongoose.startSession();
-  try {
-    await session.withTransaction(async () => {
-      for (const item of data) {
-        const decoded = item.decoded!;
-        await CDCStudent.findOneAndUpdate(
-          { enrollmentNumber: decoded.enrollmentNumber },
-          { $set: {
+  await CDCStudent.createIndexes();
+
+  const enrollmentNumbers = data.map((item) => item.decoded!.enrollmentNumber);
+  const cardIds = data.map((item) => item.cardId);
+  const existing: any[] = await CDCStudent.find({
+    $or: [
+      { enrollmentNumber: { $in: enrollmentNumbers } },
+      { cardId: { $in: cardIds } },
+    ],
+  }).select({ enrollmentNumber: 1, cardId: 1 }).lean();
+
+  const existingByCard = new Map(existing.map((student) => [student.cardId, student.enrollmentNumber]));
+  for (const item of data) {
+    const decoded = item.decoded!;
+    const owner = existingByCard.get(item.cardId);
+    if (owner && owner !== decoded.enrollmentNumber) {
+      return jsonError(
+        `Import stopped: Card ID ${item.cardId} is already assigned to enrollment ${owner}.`,
+        409,
+      );
+    }
+  }
+
+  const operations = data.map((item) => {
+    const decoded = item.decoded!;
+    return {
+      updateOne: {
+        filter: { enrollmentNumber: decoded.enrollmentNumber },
+        update: {
+          $set: {
             name: item.name,
             cardId: item.cardId,
             rollNumber: decoded.rollNumber,
@@ -63,19 +90,29 @@ export async function POST(req: NextRequest) {
             admissionYear: decoded.admissionYear,
             department: item.department,
             active: true,
-          } },
-          { upsert: true, returnDocument: "after", setDefaultsOnInsert: true, session },
-        );
-        imported++;
-      }
+          },
+        },
+        upsert: true,
+      },
+    };
+  });
+
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      await CDCStudent.bulkWrite(operations, {
+        ordered: false,
+        session,
+      });
     });
   } catch (error: any) {
-    imported = 0;
-    if (error?.code === 11000) return jsonError("Import rolled back: a Card ID is already assigned to another CDC student.", 409);
+    if (error?.code === 11000 || Array.isArray(error?.writeErrors)) {
+      return jsonError("Import rolled back: a Card ID is already assigned to another CDC student.", 409);
+    }
     throw error;
   } finally {
     await session.endSession();
   }
 
-  return Response.json({ success: true, imported });
+  return Response.json({ success: true, imported: data.length });
 }

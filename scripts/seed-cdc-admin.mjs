@@ -14,12 +14,12 @@ for (const file of [".env.local", ".env"]) {
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || "vips_library";
-const email = process.env.CDC_ADMIN_EMAIL?.toLowerCase();
+const email = (process.env.CDC_ADMIN_EMAIL || "cdc@vipstc.edu.in").toLowerCase();
 const password = process.env.CDC_ADMIN_PASSWORD;
-const name = process.env.CDC_ADMIN_NAME || "CDC Administrator";
+const name = process.env.CDC_ADMIN_NAME || "CDC";
 
-if (!uri || !email || !password) {
-  console.error("Set MONGODB_URI, CDC_ADMIN_EMAIL and CDC_ADMIN_PASSWORD before running this command.");
+if (!uri || !password) {
+  console.error("Set MONGODB_URI and CDC_ADMIN_PASSWORD before running this command.");
   process.exit(1);
 }
 if (password.length < 12) {

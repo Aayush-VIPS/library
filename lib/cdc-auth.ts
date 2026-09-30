@@ -30,7 +30,7 @@ export async function setCDCSessionCookie(token: string) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    path: "/cdc",
+    path: "/",
     maxAge: 12 * 60 * 60,
     priority: "high",
   });
@@ -38,7 +38,7 @@ export async function setCDCSessionCookie(token: string) {
 
 export async function clearCDCSessionCookie() {
   const store = await cookies();
-  store.set(COOKIE, "", { httpOnly: true, path: "/cdc", maxAge: 0, sameSite: "strict" });
+  store.set(COOKIE, "", { httpOnly: true, path: "/", maxAge: 0, sameSite: "strict" });
 }
 
 export async function currentCDCAdmin(): Promise<CDCAdminSession | null> {

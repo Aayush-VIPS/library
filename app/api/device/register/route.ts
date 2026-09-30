@@ -10,7 +10,7 @@ const schema = z.object({
   macAddress: z.string().regex(/^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/),
   name: z.string().min(2).max(80),
   firmwareVersion: z.string().max(40).optional().default(""),
-  deviceType: z.literal("LIBRARY_GATE"),
+  deviceType: z.enum(["LIBRARY_GATE", "CDC_GATE"]),
 });
 
 export async function POST(req: NextRequest) {
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     {
       $set: {
         name: parsed.data.name,
-        deviceType: "LIBRARY_GATE",
+        deviceType: parsed.data.deviceType,
         firmwareVersion: parsed.data.firmwareVersion,
         secretHash: sha256(secret),
         active: true,

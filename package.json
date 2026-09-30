@@ -12,7 +12,8 @@
     "start": "next start",
     "lint": "eslint .",
     "seed:admin": "node scripts/seed-admin.mjs",
-    "db:indexes": "tsx scripts/sync-indexes.ts"
+    "db:indexes": "tsx scripts/sync-indexes.ts",
+    "seed:cdc-admin": "node scripts/seed-cdc-admin.mjs"
   },
   "dependencies": {
     "jose": "6.2.3",

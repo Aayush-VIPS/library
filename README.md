@@ -240,3 +240,62 @@ Before deploying all readers:
 - Test open visit auto-closes to exactly 18:00 with `AUTO_6PM`
 - Disable a reader from dashboard and verify its device API auth fails
 - Export visit CSV and compare against dashboard history
+
+
+## CDC placement attendance portal
+
+The same application now contains a separate Career Development Centre attendance area under `/cdc`.
+
+Current CDC scope:
+
+- Separate CDC student, placement-session and attendance collections
+- Completely separate CDC authentication from the Library portal
+- Dedicated CDC administrator collection, login and session cookie
+- CSV roster import with enrollment-number decoding and programme-code validation
+- Card ID or enrollment-number attendance capture
+- Session-level programme eligibility
+- Database-level duplicate attendance prevention
+- Open / close attendance registers
+- Session attendance CSV export
+- No CDC attendance data is written to the library visit collections
+
+Approved B.Tech programme codes are:
+
+```text
+027 CSE
+116 AIML
+117 IIOT
+119 AIDS
+135 Computer Science - Cyber Security
+160 VLSI
+495 CSAM
+```
+
+The first roster prepared for import contains the 481 confirmed 2023 B.Tech students from codes 027, 116, 117, 119 and 160. Codes 072, 084 and 085 are intentionally excluded until they are verified.
+
+CDC roster CSV requires:
+
+```text
+enrollmentNumber,name,cardId
+```
+
+Optional columns include `program` and `department`. Enrollment metadata is decoded server-side, so shortened enrollment numbers are left-padded to 11 digits before validation.
+
+Configure separate CDC credentials in the deployment environment:
+
+```env
+CDC_ADMIN_EMAIL=cdc@vipstc.edu.in
+CDC_ADMIN_PASSWORD=<deployment secret>
+CDC_ADMIN_NAME=CDC
+```
+
+Then provision the CDC account and indexes:
+
+```bash
+npm run seed:cdc-admin
+npm run db:indexes
+```
+
+CDC staff sign in only at `/cdc/login`. Library sessions do not grant CDC access, and CDC sessions do not grant Library access.
+
+Run the index command before importing the roster so the unique CDC enrollment, Card ID and per-session attendance indexes are enforced in production.

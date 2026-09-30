@@ -1,0 +1,78 @@
+import { NextRequest } from "next/server";
+import { z } from "zod";
+import { connectDB } from "@/lib/db";
+import { CDCAdmin, CDCStudent, CDCSession, CDCAttendance } from "@/lib/models";
+import { createCDCSession, setCDCSessionCookie } from "@/lib/cdc-auth";
+import { hashPassword, safeEqual, verifyPassword } from "@/lib/crypto";
+import { jsonError, requestIp, requireSameOrigin } from "@/lib/http";
+import { clearLoginFailures, loginAllowed, recordLoginFailure } from "@/lib/login-throttle";
+
+const schema = z.object({
+  email: z.string().email().max(200),
+  password: z.string().min(8).max(200),
+});
+
+async function bootstrapCDCAdmin(email: string, password: string) {
+  if (await CDCAdmin.exists({})) return;
+
+  const configuredEmail = (process.env.CDC_ADMIN_EMAIL || "cdc@vipstc.edu.in").trim().toLowerCase();
+  const configuredName = (process.env.CDC_ADMIN_NAME || "CDC").trim() || "CDC";
+  const configuredPassword = process.env.CDC_ADMIN_PASSWORD || "";
+
+  if (!configuredPassword || configuredPassword.length < 12) return;
+  if (email !== configuredEmail || !safeEqual(password, configuredPassword)) return;
+
+  // Production disables automatic index creation. Initialize every CDC
+  // collection index during the one-time bootstrap so deployment requires
+  // no local database credentials or index command.
+  await Promise.all([
+    CDCAdmin.createIndexes(),
+    CDCStudent.createIndexes(),
+    CDCSession.createIndexes(),
+    CDCAttendance.createIndexes(),
+  ]);
+
+  await CDCAdmin.findOneAndUpdate(
+    { email: configuredEmail },
+    {
+      $setOnInsert: {
+        email: configuredEmail,
+        name: configuredName,
+        passwordHash: hashPassword(configuredPassword),
+        active: true,
+        sessionVersion: 0,
+      },
+    },
+    { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
+  );
+}
+
+export async function POST(req: NextRequest) {
+  if (!requireSameOrigin(req)) return jsonError("Invalid request origin.", 403);
+  const parsed = schema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return jsonError("Enter a valid CDC email and password.", 400);
+
+  const email = parsed.data.email.toLowerCase();
+  const key = `cdc:${requestIp(req)}:${email}`;
+  if (!(await loginAllowed(key))) return jsonError("Too many failed attempts. Try again later.", 429);
+
+  await connectDB();
+  await bootstrapCDCAdmin(email, parsed.data.password);
+
+  const admin: any = await CDCAdmin.findOne({ email, active: true });
+  if (!admin || !verifyPassword(parsed.data.password, admin.passwordHash)) {
+    await recordLoginFailure(key);
+    return jsonError("Invalid CDC email or password.", 401);
+  }
+
+  await clearLoginFailures(key);
+  admin.lastLoginAt = new Date();
+  await admin.save();
+  const token = await createCDCSession({
+    sub: String(admin._id),
+    email: admin.email,
+    sv: admin.sessionVersion,
+  });
+  await setCDCSessionCookie(token);
+  return Response.json({ success: true });
+}

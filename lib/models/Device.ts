@@ -5,7 +5,7 @@ const schema = new Schema({
   macAddress: { type: String, required: true, unique: true, uppercase: true, trim: true },
   name: { type: String, required: true, trim: true },
   libraryId: { type: String, required: true, default: DEFAULT_LIBRARY_ID, index: true },
-  deviceType: { type: String, enum: ["LIBRARY_GATE"], default: "LIBRARY_GATE" },
+  deviceType: { type: String, enum: ["LIBRARY_GATE", "CDC_GATE"], default: "LIBRARY_GATE", index: true },
   secretHash: { type: String, required: true },
   firmwareVersion: { type: String, default: "" },
   active: { type: Boolean, default: true },

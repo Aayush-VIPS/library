@@ -27,10 +27,10 @@ export default async function CDCSessionPage({ params }: { params: Promise<{ id:
       <div className="card metric-card"><span className="metric-label">Present</span><strong className="metric-value green">{attendance.length}</strong><span className="metric-foot">Unique students marked</span></div>
       <div className="card metric-card"><span className="metric-label">Eligible roster</span><strong className="metric-value">{eligibleCount}</strong><span className="metric-foot">{session.eligibleProgramCodes?.length ? session.eligibleProgramCodes.map(cdcProgramLabel).join(", ") : "All CDC programmes"}</span></div>
       <div className="card metric-card"><span className="metric-label">Attendance rate</span><strong className="metric-value blue">{percent}%</strong><span className="metric-foot">Present / eligible</span></div>
-      <div className="card metric-card"><span className="metric-label">Register status</span><strong className="metric-value" style={{fontSize:22}}>{session.status}</strong><span className="metric-foot">{session.status === "OPEN" ? "Accepting scans" : "Attendance locked"}</span></div>
+      <div className="card metric-card"><span className="metric-label">RFID readers</span><strong className="metric-value" style={{fontSize:22}}>{session.scannerActive ? "ACTIVE" : "OFF"}</strong><span className="metric-foot">{session.scannerActive ? "Readers are bound to this session" : session.status === "OPEN" ? "Activate when ready to scan" : "Attendance locked"}</span></div>
     </section>
 
-    <section className="card section-card" style={{marginTop:15}}><CDCAttendanceScanner sessionId={id} status={session.status} /></section>
+    <section className="card section-card" style={{marginTop:15}}><CDCAttendanceScanner sessionId={id} status={session.status} scannerActive={Boolean(session.scannerActive)} /></section>
 
     <section className="card table-card">
       <div className="toolbar"><div className="toolbar-title"><b>Attendance register</b><span>Newest attendance first · duplicate students are prevented at database level</span></div></div>

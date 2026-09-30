@@ -40,16 +40,16 @@ function scanLibraryFilter(libraryId: LibraryScope = "all") {
 
 function deviceLibraryFilter(libraryId: LibraryScope = "all") {
   libraryId = normalizeScope(libraryId);
-  if (libraryId === "all") return {};
+  if (libraryId === "all") return { deviceType: "LIBRARY_GATE" };
   if (Array.isArray(libraryId)) {
     return libraryId.includes(DEFAULT_LIBRARY_ID)
-      ? { $or: [{ libraryId: { $in: libraryId } }, { libraryId: { $exists: false } }] }
-      : { libraryId: { $in: libraryId } };
+      ? { deviceType: "LIBRARY_GATE", $or: [{ libraryId: { $in: libraryId } }, { libraryId: { $exists: false } }] }
+      : { deviceType: "LIBRARY_GATE", libraryId: { $in: libraryId } };
   }
   if (libraryId === DEFAULT_LIBRARY_ID) {
-    return { $or: [{ libraryId: DEFAULT_LIBRARY_ID }, { libraryId: { $exists: false } }] };
+    return { deviceType: "LIBRARY_GATE", $or: [{ libraryId: DEFAULT_LIBRARY_ID }, { libraryId: { $exists: false } }] };
   }
-  return { libraryId };
+  return { deviceType: "LIBRARY_GATE", libraryId };
 }
 
 export async function dashboardSummary(now = new Date(), libraryId: LibraryScope = "all") {
@@ -78,7 +78,7 @@ export async function dashboardSummary(now = new Date(), libraryId: LibraryScope
       { $project: { libraryId: { $ifNull: ["$inLibraryId", DEFAULT_LIBRARY_ID] }, open: { $cond: [{ $not: ["$outAt"] }, 1, 0] } } },
       { $group: { _id: "$libraryId", visitsToday: { $sum: 1 }, inside: { $sum: "$open" } } },
     ]),
-    Device.find({ active: true }).select("libraryId lastSeenAt").lean(),
+    Device.find({ active: true, deviceType: "LIBRARY_GATE" }).select("libraryId lastSeenAt").lean(),
   ]);
 
   const footfall = Array.from({ length: 9 }, (_, i) => ({ hour: i + 9, count: 0 }));

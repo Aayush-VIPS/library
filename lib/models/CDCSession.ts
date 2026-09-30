@@ -15,9 +15,17 @@ const schema = new Schema({
 }, { timestamps: true });
 
 schema.index({ status: 1, scheduledAt: -1 });
+
+// Keep the simple scannerActive index for fast reader lookup, but enforce the
+// single-active-session invariant with a distinct compound key. This avoids
+// conflicting with an existing scannerActive_1 index created by earlier builds.
 schema.index(
-  { scannerActive: 1 },
-  { unique: true, partialFilterExpression: { scannerActive: true } },
+  { scannerActive: 1, status: 1 },
+  {
+    name: "cdc_single_active_scanner_session",
+    unique: true,
+    partialFilterExpression: { scannerActive: true, status: "OPEN" },
+  },
 );
 
 export type CDCSessionDoc = InferSchemaType<typeof schema>;

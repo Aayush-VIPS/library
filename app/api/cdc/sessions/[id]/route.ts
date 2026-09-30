@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireCDCApi } from "@/lib/cdc-auth";
 import { connectDB } from "@/lib/db";
-import { CDCSession } from "@/lib/models";
+import { CDCAttendance, CDCSession } from "@/lib/models";
 import { jsonError, requireSameOrigin } from "@/lib/http";
 
 const schema = z.object({
@@ -37,6 +37,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   if (parsed.data.scannerActive === true) {
     if (session.status !== "OPEN") return jsonError("Open the session before activating RFID readers.", 409);
+    await Promise.all([CDCSession.createIndexes(), CDCAttendance.createIndexes()]);
     await CDCSession.updateMany({ _id: { $ne: session._id }, scannerActive: true }, { $set: { scannerActive: false } });
     session.scannerActive = true;
   } else if (parsed.data.scannerActive === false) {

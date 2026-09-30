@@ -18,9 +18,6 @@ export function CDCSidebar() {
         return <Link className={`nav-link ${active ? "active" : ""}`} href={href} key={href}><span className="nav-icon" />{label}</Link>;
       })}
     </nav>
-    <div className="sidebar-footer">
-      <span className="brand-sub">Other portal</span>
-      <Link className="system-live" href="/dashboard">← Library RFID</Link>
-    </div>
+    <div className="sidebar-footer"><span className="brand-sub">System</span><div className="system-live"><i /> CDC operational</div></div>
   </aside>;
 }

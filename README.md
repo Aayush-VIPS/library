@@ -284,9 +284,9 @@ Optional columns include `program` and `department`. Enrollment metadata is deco
 Configure separate CDC credentials in the deployment environment:
 
 ```env
-CDC_ADMIN_EMAIL=cdc.admin@your-domain
-CDC_ADMIN_PASSWORD=<strong separate password>
-CDC_ADMIN_NAME=CDC Administrator
+CDC_ADMIN_EMAIL=cdc@vipstc.edu.in
+CDC_ADMIN_PASSWORD=<deployment secret>
+CDC_ADMIN_NAME=CDC
 ```
 
 Then provision the CDC account and indexes:

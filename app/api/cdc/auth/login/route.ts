@@ -3,7 +3,7 @@ import { z } from "zod";
 import { connectDB } from "@/lib/db";
 import { CDCAdmin } from "@/lib/models";
 import { createCDCSession, setCDCSessionCookie } from "@/lib/cdc-auth";
-import { verifyPassword } from "@/lib/crypto";
+import { hashPassword, safeEqual, verifyPassword } from "@/lib/crypto";
 import { jsonError, requestIp, requireSameOrigin } from "@/lib/http";
 import { clearLoginFailures, loginAllowed, recordLoginFailure } from "@/lib/login-throttle";
 
@@ -11,6 +11,35 @@ const schema = z.object({
   email: z.string().email().max(200),
   password: z.string().min(8).max(200),
 });
+
+async function bootstrapCDCAdmin(email: string, password: string) {
+  if (await CDCAdmin.exists({})) return;
+
+  const configuredEmail = (process.env.CDC_ADMIN_EMAIL || "cdc@vipstc.edu.in").trim().toLowerCase();
+  const configuredName = (process.env.CDC_ADMIN_NAME || "CDC").trim() || "CDC";
+  const configuredPassword = process.env.CDC_ADMIN_PASSWORD || "";
+
+  if (!configuredPassword || configuredPassword.length < 12) return;
+  if (email !== configuredEmail || !safeEqual(password, configuredPassword)) return;
+
+  // Production disables automatic index creation. Ensure the CDC admin
+  // uniqueness constraint exists before the one-time bootstrap upsert.
+  await CDCAdmin.createIndexes();
+
+  await CDCAdmin.findOneAndUpdate(
+    { email: configuredEmail },
+    {
+      $setOnInsert: {
+        email: configuredEmail,
+        name: configuredName,
+        passwordHash: hashPassword(configuredPassword),
+        active: true,
+        sessionVersion: 0,
+      },
+    },
+    { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
+  );
+}
 
 export async function POST(req: NextRequest) {
   if (!requireSameOrigin(req)) return jsonError("Invalid request origin.", 403);
@@ -22,6 +51,8 @@ export async function POST(req: NextRequest) {
   if (!(await loginAllowed(key))) return jsonError("Too many failed attempts. Try again later.", 429);
 
   await connectDB();
+  await bootstrapCDCAdmin(email, parsed.data.password);
+
   const admin: any = await CDCAdmin.findOne({ email, active: true });
   if (!admin || !verifyPassword(parsed.data.password, admin.passwordHash)) {
     await recordLoginFailure(key);

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connectDB } from "@/lib/db";
 import { CDCSession, CDCAttendance, CDCStudent } from "@/lib/models";
@@ -21,7 +22,7 @@ export default async function CDCSessionPage({ params }: { params: Promise<{ id:
 
   const percent = eligibleCount ? Math.round((attendance.length / eligibleCount) * 100) : 0;
   return <main className="page-wrap">
-    <div className="page-heading"><span className="eyebrow">Placement attendance</span><h2>{session.title}</h2><p>{session.company || "CDC"} · {formatDateIST(session.scheduledAt)} at {formatIST(session.scheduledAt)}{session.venue ? ` · ${session.venue}` : ""}</p></div>
+    <div className="page-heading"><span className="eyebrow">Placement attendance</span><h2>{session.title}</h2><p>{session.company || "CDC"} · {formatDateIST(session.scheduledAt)} at {formatIST(session.scheduledAt)}{session.venue ? ` · ${session.venue}` : ""}</p><div style={{marginTop:12}}><Link className="btn" href={`/api/cdc/sessions/${id}/export`}>Export attendance CSV</Link></div></div>
     <section className="grid-4">
       <div className="card metric-card"><span className="metric-label">Present</span><strong className="metric-value green">{attendance.length}</strong><span className="metric-foot">Unique students marked</span></div>
       <div className="card metric-card"><span className="metric-label">Eligible roster</span><strong className="metric-value">{eligibleCount}</strong><span className="metric-foot">{session.eligibleProgramCodes?.length ? session.eligibleProgramCodes.map(cdcProgramLabel).join(", ") : "All CDC programmes"}</span></div>

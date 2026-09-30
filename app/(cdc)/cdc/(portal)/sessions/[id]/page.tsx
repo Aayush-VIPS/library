@@ -15,9 +15,11 @@ export default async function CDCSessionPage({ params }: { params: Promise<{ id:
 
   const eligibleFilter: any = { active: true };
   if (session.eligibleProgramCodes?.length) eligibleFilter.programCode = { $in: session.eligibleProgramCodes };
-  const [eligibleCount, attendance]: [number, any[]] = await Promise.all([
+  const onlineSince = new Date(Date.now() - 15_000);
+  const [eligibleCount, attendance, onlineReaders]: [number, any[], number] = await Promise.all([
     CDCStudent.countDocuments(eligibleFilter),
     CDCAttendance.find({ sessionId: session._id }).sort({ markedAt: -1 }).populate("studentId").lean(),
+    Device.countDocuments({ deviceType: "CDC_GATE", active: true, lastSeenAt: { $gte: onlineSince } }),
   ]);
 
   const percent = eligibleCount ? Math.round((attendance.length / eligibleCount) * 100) : 0;

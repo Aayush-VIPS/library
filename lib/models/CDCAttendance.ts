@@ -9,7 +9,7 @@ const schema = new Schema({
   method: { type: String, enum: ["SCAN", "MANUAL"], default: "SCAN" },
 }, { timestamps: true });
 
-schema.index({ sessionId: 1, studentId: 1 }, { unique: true });
+schema.index({ sessionId: 1, studentId: 1 }, { unique: true });\nschema.index({ eventId: 1 }, { unique: true, sparse: true });
 schema.index({ sessionId: 1, markedAt: -1 });
 
 export type CDCAttendanceDoc = InferSchemaType<typeof schema>;

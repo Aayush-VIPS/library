@@ -17,8 +17,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   await connectDB();
   const update = parsed.data.status === "CLOSED"
-    ? { status: "CLOSED", closedAt: new Date() }
-    : { status: "OPEN", $unset: { closedAt: 1 } };
+    ? { $set: { status: "CLOSED", closedAt: new Date() } }
+    : { $set: { status: "OPEN" }, $unset: { closedAt: 1 } };
   const session = await CDCSession.findByIdAndUpdate(id, update, { returnDocument: "after" });
   if (!session) return jsonError("Session not found.", 404);
   return Response.json({ success: true, status: session.status });

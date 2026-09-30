@@ -5,7 +5,7 @@ const schema = new Schema({
   studentId: { type: Schema.Types.ObjectId, ref: "CDCStudent", required: true, index: true },
   cardId: { type: String, required: true, trim: true },
   markedAt: { type: Date, required: true, default: Date.now, index: true },
-  markedBy: { type: Schema.Types.ObjectId, ref: "Admin", required: true },
+  markedBy: { type: Schema.Types.ObjectId, ref: "CDCAdmin", required: true },
   method: { type: String, enum: ["SCAN", "MANUAL"], default: "SCAN" },
 }, { timestamps: true });
 

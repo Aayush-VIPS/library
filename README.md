@@ -249,7 +249,8 @@ The same application now contains a separate Career Development Centre attendanc
 Current CDC scope:
 
 - Separate CDC student, placement-session and attendance collections
-- Super Admin-only access for the initial rollout
+- Completely separate CDC authentication from the Library portal
+- Dedicated CDC administrator collection, login and session cookie
 - CSV roster import with enrollment-number decoding and programme-code validation
 - Card ID or enrollment-number attendance capture
 - Session-level programme eligibility
@@ -280,10 +281,21 @@ enrollmentNumber,name,cardId
 
 Optional columns include `program` and `department`. Enrollment metadata is decoded server-side, so shortened enrollment numbers are left-padded to 11 digits before validation.
 
-After deploying the CDC models, run:
+Configure separate CDC credentials in the deployment environment:
+
+```env
+CDC_ADMIN_EMAIL=cdc.admin@your-domain
+CDC_ADMIN_PASSWORD=<strong separate password>
+CDC_ADMIN_NAME=CDC Administrator
+```
+
+Then provision the CDC account and indexes:
 
 ```bash
+npm run seed:cdc-admin
 npm run db:indexes
 ```
 
-before importing the roster so the unique CDC enrollment, Card ID and per-session attendance indexes are enforced in production.
+CDC staff sign in only at `/cdc/login`. Library sessions do not grant CDC access, and CDC sessions do not grant Library access.
+
+Run the index command before importing the roster so the unique CDC enrollment, Card ID and per-session attendance indexes are enforced in production.

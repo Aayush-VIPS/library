@@ -10,3 +10,4 @@ export { Library } from "./Library";
 export { CDCStudent } from "./CDCStudent";
 export { CDCSession } from "./CDCSession";
 export { CDCAttendance } from "./CDCAttendance";
+export { CDCAdmin } from "./CDCAdmin";

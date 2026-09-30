@@ -3,7 +3,9 @@ export const CDC_PROGRAMS = [
   { code: "116", label: "AIML", name: "Artificial Intelligence & Machine Learning" },
   { code: "117", label: "IIOT", name: "Industrial Internet of Things" },
   { code: "119", label: "AIDS", name: "Artificial Intelligence & Data Science" },
+  { code: "135", label: "CYBER", name: "Computer Science - Cyber Security" },
   { code: "160", label: "VLSI", name: "VLSI Design & Technology" },
+  { code: "495", label: "CSAM", name: "Computer Science & Applied Mathematics" },
 ] as const;
 
 export const CDC_PROGRAM_CODES = new Set<string>(CDC_PROGRAMS.map((program) => program.code));

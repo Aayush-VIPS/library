@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { connectDB } from "@/lib/db";
-import { CDCAdmin } from "@/lib/models";
+import { CDCAdmin, CDCStudent, CDCSession, CDCAttendance } from "@/lib/models";
 import { createCDCSession, setCDCSessionCookie } from "@/lib/cdc-auth";
 import { hashPassword, safeEqual, verifyPassword } from "@/lib/crypto";
 import { jsonError, requestIp, requireSameOrigin } from "@/lib/http";
@@ -22,9 +22,15 @@ async function bootstrapCDCAdmin(email: string, password: string) {
   if (!configuredPassword || configuredPassword.length < 12) return;
   if (email !== configuredEmail || !safeEqual(password, configuredPassword)) return;
 
-  // Production disables automatic index creation. Ensure the CDC admin
-  // uniqueness constraint exists before the one-time bootstrap upsert.
-  await CDCAdmin.createIndexes();
+  // Production disables automatic index creation. Initialize every CDC
+  // collection index during the one-time bootstrap so deployment requires
+  // no local database credentials or index command.
+  await Promise.all([
+    CDCAdmin.createIndexes(),
+    CDCStudent.createIndexes(),
+    CDCSession.createIndexes(),
+    CDCAttendance.createIndexes(),
+  ]);
 
   await CDCAdmin.findOneAndUpdate(
     { email: configuredEmail },

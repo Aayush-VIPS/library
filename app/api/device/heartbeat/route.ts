@@ -5,7 +5,7 @@ import { jsonError } from "@/lib/http";
 
 const schema = z.object({
   firmwareVersion: z.string().max(40).optional(),
-  deviceType: z.literal("LIBRARY_GATE"),
+  deviceType: z.enum(["LIBRARY_GATE", "CDC_GATE"]),
   queueDepth: z.number().int().min(0).max(10000).optional(),
   rssi: z.number().int().min(-150).max(10).optional(),
   clockReady: z.boolean().optional(),

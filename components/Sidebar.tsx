@@ -7,7 +7,7 @@ const links = [
   ["/visits", "Visit History"], ["/devices", "Devices"], ["/events", "Scan Events"],
 ] as const;
 
-const systemLinks = [["/libraries", "Libraries"], ["/users", "Users & Staff"], ["/cdc", "CDC Placement"]] as const;
+const systemLinks = [["/libraries", "Libraries"], ["/users", "Users & Staff"]] as const;
 
 export function Sidebar({ canManageSystem = false }: { canManageSystem?: boolean }) {
   const path = usePathname();

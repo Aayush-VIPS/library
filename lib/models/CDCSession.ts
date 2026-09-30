@@ -8,8 +8,9 @@ const schema = new Schema({
   eligibleProgramCodes: { type: [String], default: [] },
   notes: { type: String, trim: true, default: "" },
   status: { type: String, enum: ["OPEN", "CLOSED"], default: "OPEN", index: true },
-  createdBy: { type: Schema.Types.ObjectId, ref: "Admin", required: true },
+  createdBy: { type: Schema.Types.ObjectId, ref: "CDCAdmin", required: true },
   closedAt: { type: Date },
+  attendanceVersion: { type: Number, default: 0 },
 }, { timestamps: true });
 
 schema.index({ status: 1, scheduledAt: -1 });

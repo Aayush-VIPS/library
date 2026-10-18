@@ -8,6 +8,7 @@ export const LIBRARIES = [
   { id: "business", name: "Business Library" },
   { id: "journalism", name: "Journalism Library" },
   { id: "meditation-room", name: "Meditation Room" },
+  { id: "auditorium", name: "Auditorium", location: "Block B, Ground Floor" },
 ] as const;
 
 export const DEFAULT_LIBRARY_ID = LIBRARIES[0].id;
@@ -38,6 +39,7 @@ export function normalizeLibraryId(value: string) {
 export function libraryDisplayName(name: string, location?: string) {
   const cleanName = name.trim();
   if (/meditation/i.test(cleanName)) return cleanName || "Meditation Room";
+  if (/auditorium/i.test(cleanName)) return cleanName || "Auditorium";
   const cleanLocation = (location || "").trim().replace(/\s+/g, " ");
   if (!cleanLocation || !/\b(block|floor|wing|building|level)\b/i.test(cleanLocation)) return cleanName;
   return /\blibrary\b/i.test(cleanLocation) ? cleanLocation : cleanLocation + " Library";
@@ -66,6 +68,21 @@ export async function ensureDefaultLibraries() {
         libraryId: "meditation-room",
         name: "Meditation Room",
         location: "",
+        active: true,
+      });
+    }
+
+    const existingAuditorium = await Library.findOne({
+      $or: [
+        { libraryId: "auditorium" },
+        { name: /auditorium/i },
+      ],
+    }).lean();
+    if (!existingAuditorium) {
+      await Library.create({
+        libraryId: "auditorium",
+        name: "Auditorium",
+        location: "Block B, Ground Floor",
         active: true,
       });
     }
